@@ -1,0 +1,58 @@
+let
+    // ========================
+    // DEFINIÇÃO DA FONTE E CONFIGURAÇÃO
+    // ========================
+
+    // Nome da tabela fato usada como base
+    Fonte = InsiraAquiONomeDaTabela,
+
+    // Nome da coluna de data a ser utilizada (altere aqui conforme necessário)
+    NomeColunaData = "InsiraAquiONomeDaCOLUNADeDatas",
+
+
+    // ========================
+    // PRÉ-PROCESSAMENTO DAS DATAS
+    // ========================
+
+    // Remove linhas com valor nulo na coluna de data
+    DatasValidas = Table.SelectRows(Fonte, each Record.Field(_, NomeColunaData) <> null),
+
+    // Converte datetime para date, se necessário
+    ColunaDataSomente = Table.TransformColumns(DatasValidas, {{NomeColunaData, DateTime.Date, type date}}),
+
+    // Seleciona apenas a coluna de data
+    ApenasDatas = Table.SelectColumns(ColunaDataSomente, {NomeColunaData}),
+
+    // Remove datas duplicadas
+    DatasUnicas = Table.Distinct(ApenasDatas),
+
+    // Armazena valores mínimo e máximo de data
+	DataMinima = List.Min(Table.Column(DatasUnicas, NomeColunaData)),
+	DataMaxima = List.Max(Table.Column(DatasUnicas, NomeColunaData)),
+
+
+    // ========================
+    // CRIAÇÃO DA TABELA CALENDÁRIO
+    // ========================
+
+    // Gera lista de datas do menor ao maior valor encontrado
+    ListaDatas = List.Dates(DataMinima, Duration.Days(DataMaxima - DataMinima) + 1, #duration(1, 0, 0, 0)),
+
+    // Converte a lista em tabela
+    TabelaDatas = Table.FromList(ListaDatas, Splitter.SplitByNothing(), {"Data"}),
+    #"Tipo Alterado" = Table.TransformColumnTypes(TabelaDatas,{{"Data", type date}}),
+
+
+    // ========================
+    // ENRIQUECIMENTO COM ATRIBUTOS DE DATA
+    // ========================
+
+    AdicionaAno = Table.AddColumn(#"Tipo Alterado", "Ano", each Date.Year([Data]), Int64.Type),
+    AdicionaMes = Table.AddColumn(AdicionaAno, "Mes", each Date.Month([Data]), Int64.Type),
+    AdicionaNomeMes = Table.AddColumn(AdicionaMes, "Nome_Mes", each Date.ToText([Data], "MMMM"), type text),
+    AdicionaTrimestre = Table.AddColumn(AdicionaNomeMes, "Trimestre", each Date.QuarterOfYear([Data]), Int64.Type),
+    AdicionaDiaSemana = Table.AddColumn(AdicionaTrimestre, "Dia_Semana", each Date.DayOfWeek([Data]), Int64.Type),
+    AdicionaNomeDia = Table.AddColumn(AdicionaDiaSemana, "Nome_Dia", each Date.ToText([Data], "dddd"), type text),
+    AdicionaAnoMes = Table.AddColumn(AdicionaNomeDia, "Ano_Mes", each Text.From(Date.Year([Data])) & "-" & Text.PadStart(Text.From(Date.Month([Data])), 2, "0"), type text)
+in
+    AdicionaAnoMes
