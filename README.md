@@ -96,3 +96,4 @@ O código garante padronização, auditabilidade e robustez contra entradas inco
 Desenvolvido por **Ramiro Manoel**  
 💼 [LinkedIn](https://www.linkedin.com/in/ramiromanoel)  
 📊 Focado em BI, SQL, Power BI e Python para análise e modelagem de dados.
+
