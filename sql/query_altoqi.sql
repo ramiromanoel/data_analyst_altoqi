@@ -18,3 +18,5 @@ HAVING
     COUNT(p.PedidoID) > 5
 ORDER BY 
     TotalComprasUltimoAno DESC;
+
+-- vs final
